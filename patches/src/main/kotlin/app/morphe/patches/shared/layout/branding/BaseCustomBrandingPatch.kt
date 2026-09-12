@@ -359,6 +359,12 @@ internal fun baseCustomBrandingPatch(
                         )
                     }
 
+                    // A launch alias cannot declare a round icon that changes with the selected
+                    // branding, so a launcher that prefers the round icon of the app always shows
+                    // the unpatched icon. Adaptive icons replaced round icons in Android 8 and the
+                    // target apps require Android 8 or later, so the declaration can be removed.
+                    application.removeAttribute("android:roundIcon")
+
                     val enabledNameIndex = if (useCustomName) numberOfPresetAppNames else 1 // 1 indexing
                     val enabledIconIndex = if (useCustomIcon) iconStyleNames.size else 0 // 0 indexing
 
