@@ -73,17 +73,17 @@ private const val CUSTOM_USER_ICON_STYLE_NAME = "custom"
 private const val DEFAULT_MOUNTED_ICON_STYLE_NAME = "black"
 
 // A mounted install cannot select an icon at runtime, so the style is a patch option instead.
-// The values must be kept in sync with 'iconStyleNames'.
-private val mountedIconStyleValues = mapOf(
-    "App default" to null,
-    "Original" to ORIGINAL_USER_ICON_STYLE_NAME,
-    "Black" to "black",
-    "Dark" to "dark",
-    "Light" to "light",
-    "Play" to "play",
-    "Play black" to "play_black",
-    "Custom" to CUSTOM_USER_ICON_STYLE_NAME,
-)
+// Derived from the bundled styles so a new style cannot be missing here.
+private val mountedIconStyleValues = buildMap<String, String?> {
+    put("App default", null)
+    put("Original", ORIGINAL_USER_ICON_STYLE_NAME)
+
+    iconStyleNames.forEach { style ->
+        put(style.replace('_', ' ').replaceFirstChar(Char::uppercase), style)
+    }
+
+    put("Custom", CUSTOM_USER_ICON_STYLE_NAME)
+}
 
 private const val LAUNCHER_RESOURCE_NAME_PREFIX = "morphe_launcher_"
 private const val LAUNCHER_ADAPTIVE_BACKGROUND_PREFIX = "morphe_adaptive_background_"
