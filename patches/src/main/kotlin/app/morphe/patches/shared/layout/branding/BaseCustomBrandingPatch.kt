@@ -629,12 +629,21 @@ private fun ResourcePatchContext.applyMountedBranding(
     val logger = Logger.getLogger(ResourcePatchContext::class.java.name)
 
     if (customName != null) {
-        if (!originalAppName.startsWith("@string/")) {
-            throw PatchException("Expected a string resource but found: $originalAppName")
+        val resourceNames = appNameResourceNames(originalAppName)
+
+        resourceNames.forEachIndexed { index, resourceName ->
+            if (setAppNameResource(resourceName, customName)) return@forEachIndexed
+
+            // The name the patch declares must exist, but a name found in the manifest can
+            // point to a resource that is not declared in the default strings file.
+            if (index == 0) {
+                throw PatchException("Could not find the app name resource: $resourceName")
+            }
+
+            logger.warning("Could not find the app name resource: $resourceName")
         }
 
-        setAppNameResource(originalAppName.substring("@string/".length), customName)
-        logger.info("Mounted install app name: $customName")
+        logger.info("Mounted install app name: $customName (${resourceNames.joinToString()})")
     }
 
     val iconStyle = mountedIconStyle
@@ -655,10 +664,60 @@ private fun ResourcePatchContext.applyMountedBranding(
 }
 
 /**
+ * The names of the string resources that decide the app name a launcher and the system show.
+ * The name the patch declares is first, followed by any additional name the manifest points to.
+ */
+private fun ResourcePatchContext.appNameResourceNames(originalAppName: String): List<String> {
+    val declaredName = stringResourceNameOrNull(originalAppName)
+        ?: throw PatchException("Expected a string resource but found: $originalAppName")
+
+    val resourceNames = mutableListOf(declaredName)
+
+    document("AndroidManifest.xml").use { document ->
+        // A launcher shows the label of the launch activity and falls back to the application
+        // label, and the app list of the system settings always shows the application label.
+        // These can be different resources, such as "YT Music" and "YouTube Music".
+        val application = document.getElementsByTagName("application").item(0) as Element
+        stringResourceNameOrNull(application.getAttribute("android:label"))?.let {
+            resourceNames += it
+        }
+
+        arrayOf("activity", "activity-alias").forEach { tagName ->
+            val elements = document.getElementsByTagName(tagName)
+
+            for (index in 0 until elements.length) {
+                val element = elements.item(index) as Element
+                if (!element.isLauncherEntry()) continue
+
+                stringResourceNameOrNull(element.getAttribute("android:label"))?.let {
+                    resourceNames += it
+                }
+            }
+        }
+    }
+
+    return resourceNames.distinct()
+}
+
+/**
+ * The resource name of an '@string/' reference, or null for anything else such as a literal
+ * or a framework resource like '@android:string/untitled'.
+ */
+private fun stringResourceNameOrNull(reference: String): String? =
+    if (reference.startsWith("@string/")) reference.substring("@string/".length) else null
+
+private fun Element.isLauncherEntry(): Boolean =
+    getElementsByTagName("category").asSequence()
+        .filterIsInstance<Element>()
+        .any { it.getAttribute("android:name") == "android.intent.category.LAUNCHER" }
+
+/**
  * Sets the app name of the default locale, and removes the localized app names because
  * a launcher resolves the app name using the locale of the device and not of the app.
+ *
+ * @return If the resource was declared and set for the default locale.
  */
-private fun ResourcePatchContext.setAppNameResource(resourceName: String, appName: String) {
+private fun ResourcePatchContext.setAppNameResource(resourceName: String, appName: String): Boolean {
     val valuesDirectories = get("res").listFiles { file ->
         file.isDirectory && (file.name == "values" || file.name.startsWith("values-"))
     } ?: throw PatchException("Could not find the app resources")
@@ -698,9 +757,7 @@ private fun ResourcePatchContext.setAppNameResource(resourceName: String, appNam
         }
     }
 
-    if (!defaultAppNameSet) {
-        throw PatchException("Could not find the app name resource: $resourceName")
-    }
+    return defaultAppNameSet
 }
 
 /**
