@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.Window;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -850,20 +851,39 @@ public final class FlyoutUtils {
         setFlyoutPlaylistId(flyoutBuffer);
 
         View senderView = senderViewRef.get();
+        Logger.printDebug(() -> "Flyout sender view object: " +
+                            (senderView != null));
         if (senderView != null) {
             ViewParent parent = senderView.getParent();
             while (parent != null) {
+                ViewParent debugParent = parent;
+                Logger.printDebug(() -> "Flyout sender view parent object: " +
+                        debugParent);
+                
                 if (parent instanceof ComponentHost componentHost) {
-                    CharSequence description = componentHost.getContentDescription();
-                    if (description != null) {
-                        String stringDescription = description.toString();
+                    AccessibilityNodeInfo accessibilityNodeInfo =
+                            componentHost.createAccessibilityNodeInfo();
 
-                        Logger.printDebug(() -> "Flyout content desription: " + stringDescription);
+                    Logger.printDebug(() -> "Flyout accessibility node info object: " +
+                            (accessibilityNodeInfo != null));
 
-                        setFlyoutVideoId(flyoutBuffer, stringDescription);
-                        setFlyoutChannel(flyoutBuffer, stringDescription);
+                    if (accessibilityNodeInfo != null) {
+                        CharSequence description = accessibilityNodeInfo.getContentDescription();
 
-                        break;
+                        Logger.printDebug(() -> "Flyout accessibility node info description object: " +
+                                (description != null));
+
+                        if (description != null) {
+                            String stringDescription = description.toString();
+
+                            Logger.printDebug(() -> "Flyout accessibility node info description content: " +
+                                    stringDescription);
+
+                            setFlyoutVideoId(flyoutBuffer, stringDescription);
+                            setFlyoutChannel(flyoutBuffer, stringDescription);
+
+                            break;
+                        }
                     }
                 }
                 parent = parent.getParent();
