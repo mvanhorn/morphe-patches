@@ -125,6 +125,7 @@ public class CustomBrandingPatch {
         // between Settings initialization and this class.
         if (notificationSmallIcon == null) {
             if (GmsCoreSupportPatch.isPackageNameOriginal()) {
+                // A mounted install has the original icon resource replaced while patching.
                 Logger.printDebug(() -> "App is root mounted. Not overriding small notification icon");
                 return notificationSmallIcon = 0;
             }
@@ -259,7 +260,7 @@ public class CustomBrandingPatch {
     public static void setBranding() {
         try {
             if (GmsCoreSupportPatch.isPackageNameOriginal()) {
-                Logger.printInfo(() -> "App is root mounted. Cannot dynamically change app icon");
+                Logger.printInfo(() -> "App is root mounted. Branding was applied while patching");
                 return;
             }
 

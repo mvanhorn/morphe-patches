@@ -187,6 +187,8 @@ internal fun baseCustomBrandingPatch(
 
             'App default' uses the custom icon if one is provided, and otherwise the same icon
             a regular install starts with.
+
+            The notification icon of the app follows this option.
         """
     ) {
         it == null || mountedIconStyleValues.containsValue(it)
@@ -265,6 +267,7 @@ internal fun baseCustomBrandingPatch(
                     // way the branding of a mounted install can be changed.
                     applyMountedBranding(
                         originalLauncherIconName,
+                        originalNotificationIconName,
                         originalAppName,
                         mountedIconStyle,
                         customIcon,
@@ -614,6 +617,7 @@ internal fun baseCustomBrandingPatch(
  * Applies the branding of a mounted (root) install by replacing the contents of the resources
  * the manifest of the stock APK already points to.
  *
+ * @param originalNotificationIconName The notification icon resource name of the unpatched app.
  * @param originalAppName The app name resource reference declared by the unpatched app.
  * @param mountedIconStyle The icon style patch option, or null to use the default icon.
  * @param customIcon The custom icon patch option folder, if one was provided.
@@ -621,6 +625,7 @@ internal fun baseCustomBrandingPatch(
  */
 private fun ResourcePatchContext.applyMountedBranding(
     originalLauncherIconName: String,
+    originalNotificationIconName: String,
     originalAppName: String,
     mountedIconStyle: String?,
     customIcon: String?,
@@ -661,6 +666,10 @@ private fun ResourcePatchContext.applyMountedBranding(
 
     setLauncherIconResource(originalLauncherIconName, iconStyle)
     logger.info("Mounted install app icon: $iconStyle")
+
+    if (setNotificationIconResource(originalNotificationIconName, iconStyle, customIcon, logger)) {
+        logger.info("Mounted install notification icon: $iconStyle")
+    }
 }
 
 /**
@@ -758,6 +767,92 @@ private fun ResourcePatchContext.setAppNameResource(resourceName: String, appNam
     }
 
     return defaultAppNameSet
+}
+
+/**
+ * Replaces the notification icon of the app with a bundled icon style, or with the
+ * notification icon the user provided.
+ *
+ * The original icons are removed and not overwritten, because they are raster images for each
+ * density and a density qualified resource is a better match than the vector that replaces them.
+ *
+ * @return If the notification icon was replaced.
+ */
+private fun ResourcePatchContext.setNotificationIconResource(
+    originalNotificationIconName: String,
+    iconStyle: String,
+    customIcon: String?,
+    logger: Logger
+): Boolean {
+    val vectorIcon: ByteArray?
+    val rasterIcons: Map<String, File>
+
+    if (iconStyle == CUSTOM_USER_ICON_STYLE_NAME) {
+        // The bundled custom notification icon is only a placeholder for the launch aliases of
+        // a regular install, so keep the original icon unless the user provided one of their own.
+        val iconPathFile = File(customIcon!!.trim())
+
+        vectorIcon = iconPathFile
+            .resolve("drawable/$USER_CUSTOM_NOTIFICATION_ICON_XML_FILE_NAME")
+            .takeIf { it.exists() }
+            ?.readBytes()
+
+        rasterIcons = notificationIconPngDirectories.keys.mapNotNull { dpi ->
+            val sourceFile = iconPathFile.resolve("$dpi/$USER_CUSTOM_NOTIFICATION_ICON_PNG_FILE_NAME")
+            if (sourceFile.exists()) dpi to sourceFile else null
+        }.toMap()
+
+        if (vectorIcon == null && rasterIcons.isEmpty()) return false
+    } else {
+        vectorIcon = inputStreamFromBundledResource(
+            "custom-branding",
+            "drawable/${NOTIFICATION_ICON_NAME}_$iconStyle.xml"
+        )?.use { it.readBytes() }
+            ?: throw PatchException("Could not find the bundled notification icon style: $iconStyle")
+
+        rasterIcons = emptyMap()
+    }
+
+    val resourceDirectory = get("res")
+    val drawableDirectories = resourceDirectory.listFiles { file ->
+        file.isDirectory && (file.name == "drawable" || file.name.startsWith("drawable-"))
+    } ?: throw PatchException("Could not find the app resources")
+
+    var removedIcons = 0
+
+    drawableDirectories.forEach { drawableDirectory ->
+        drawableDirectory.listFiles { file ->
+            file.isFile && file.nameWithoutExtension == originalNotificationIconName
+        }?.forEach { iconFile ->
+            if (iconFile.delete()) removedIcons++
+        }
+    }
+
+    if (removedIcons == 0) {
+        // Not fatal, because the launcher icon and the app name are the visible part of the
+        // branding and patching should not fail if only the notification icon was renamed.
+        logger.warning(
+            "Could not find the notification icon to replace: @drawable/$originalNotificationIconName"
+        )
+        return false
+    }
+
+    if (vectorIcon != null) {
+        val drawableDirectory = resourceDirectory.resolve("drawable")
+        drawableDirectory.mkdirs()
+        drawableDirectory.resolve("$originalNotificationIconName.xml").writeBytes(vectorIcon)
+    }
+
+    rasterIcons.forEach { (dpi, sourceFile) ->
+        val targetDirectory = resourceDirectory.resolve(dpi)
+        targetDirectory.mkdirs()
+        sourceFile.copyTo(
+            target = targetDirectory.resolve("$originalNotificationIconName.png"),
+            overwrite = true
+        )
+    }
+
+    return true
 }
 
 /**
