@@ -211,7 +211,7 @@ public class CustomBrandingPatch {
      * Injection point.
      * <p>
      * The mipmap resource name of the original unpatched launcher icon.
-     * Differs per app: YouTube uses "ic_launcher", YT Music uses "ic_launcher_release".
+     * Differs per app: YouTube uses "ringo2_ic_launcher", YT Music uses "ic_launcher_release".
      */
     private static String originalLauncherIconName() {
         // Modified during patching.
