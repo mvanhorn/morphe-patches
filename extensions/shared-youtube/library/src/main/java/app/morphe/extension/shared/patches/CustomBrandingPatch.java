@@ -150,6 +150,12 @@ public class CustomBrandingPatch {
      * Injection point.
      */
     public static View getLottieViewOrNull(View lottieStartupView) {
+        if (GmsCoreSupportPatch.isPackageNameOriginal()) {
+            // A mounted install cannot change the icon at runtime, so the icon chosen
+            // while patching decides if the original startup animation is kept.
+            return mountedIconApplied() ? null : lottieStartupView;
+        }
+
         if (SharedYouTubeSettings.CUSTOM_BRANDING_ICON.get() == BrandingTheme.ORIGINAL) {
             return lottieStartupView;
         }
@@ -196,6 +202,16 @@ public class CustomBrandingPatch {
     private static int numberOfPresetAppNames() {
         // Modified during patching, but requires a default if custom branding is excluded.
         return 1;
+    }
+
+    /**
+     * Injection point.
+     * <p>
+     * If a mounted (root) install had a launcher icon applied during patching.
+     */
+    private static boolean mountedIconApplied() {
+        // Modified during patching, but requires a default if custom branding is excluded.
+        return false;
     }
 
     /**

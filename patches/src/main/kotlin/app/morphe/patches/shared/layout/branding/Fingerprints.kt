@@ -32,6 +32,14 @@ internal object UserProvidedCustomIconExtensionFingerprint : Fingerprint(
     parameters = listOf()
 )
 
+internal object MountedIconAppliedExtensionFingerprint : Fingerprint(
+    definingClass = EXTENSION_CLASS,
+    name = "mountedIconApplied",
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.STATIC),
+    returnType = "Z",
+    parameters = listOf()
+)
+
 internal object OriginalLauncherIconNameExtensionFingerprint : Fingerprint(
     definingClass = EXTENSION_CLASS,
     name = "originalLauncherIconName",

@@ -247,6 +247,17 @@ internal fun baseCustomBrandingPatch(
                     }
                 }
             }
+
+            finalize {
+                // Whether this is a mounted install can only be determined after all patches
+                // executed, because 'Clone app' sets the package name last.
+                val isRootInstall =
+                    setOrGetFallbackPackageName(originalAppPackageName) == originalAppPackageName
+
+                MountedIconAppliedExtensionFingerprint.method.returnEarly(
+                    isRootInstall && resolveMountedIconStyle(mountedIconStyle, customIcon) != null
+                )
+            }
         },
         resourcePatch {
             finalize {
@@ -651,12 +662,7 @@ private fun ResourcePatchContext.applyMountedBranding(
         logger.info("Mounted install app name: $customName (${resourceNames.joinToString()})")
     }
 
-    val iconStyle = mountedIconStyle
-        ?: if (customIcon != null) CUSTOM_USER_ICON_STYLE_NAME else DEFAULT_MOUNTED_ICON_STYLE_NAME
-
-    if (iconStyle == ORIGINAL_USER_ICON_STYLE_NAME) {
-        return
-    }
+    val iconStyle = resolveMountedIconStyle(mountedIconStyle, customIcon) ?: return
 
     if (iconStyle == CUSTOM_USER_ICON_STYLE_NAME && customIcon == null) {
         throw PatchException(
@@ -670,6 +676,16 @@ private fun ResourcePatchContext.applyMountedBranding(
     if (setNotificationIconResource(originalNotificationIconName, iconStyle, customIcon, logger)) {
         logger.info("Mounted install notification icon: $iconStyle")
     }
+}
+
+/**
+ * The bundled icon style a mounted install uses, or null if the original icon is kept.
+ */
+private fun resolveMountedIconStyle(mountedIconStyle: String?, customIcon: String?): String? {
+    val iconStyle = mountedIconStyle
+        ?: if (customIcon != null) CUSTOM_USER_ICON_STYLE_NAME else DEFAULT_MOUNTED_ICON_STYLE_NAME
+
+    return iconStyle.takeIf { it != ORIGINAL_USER_ICON_STYLE_NAME }
 }
 
 /**
