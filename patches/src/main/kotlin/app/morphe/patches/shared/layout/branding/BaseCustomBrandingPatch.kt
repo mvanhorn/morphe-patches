@@ -74,7 +74,7 @@ private const val DEFAULT_MOUNTED_ICON_STYLE_NAME = "black"
 
 // A mounted install cannot select an icon at runtime, so the style is a patch option instead.
 // Derived from the bundled styles so a new style cannot be missing here.
-private val mountedIconStyleValues = buildMap<String, String?> {
+private val mountedIconStyleValues = buildMap {
     put("App default", null)
     put("Original", ORIGINAL_USER_ICON_STYLE_NAME)
 
@@ -731,8 +731,8 @@ private fun ResourcePatchContext.appNameResourceNames(originalAppName: String): 
 }
 
 /**
- * The resource name of an '@string/' reference, or null for anything else such as a literal
- * or a framework resource like '@android:string/untitled'.
+ * The resource name of a string reference such as '@string/app_name', or null for anything
+ * else such as a literal or a framework resource like '@android:string/untitled'.
  */
 private fun stringResourceNameOrNull(reference: String): String? =
     if (reference.startsWith("@string/")) reference.substring("@string/".length) else null
