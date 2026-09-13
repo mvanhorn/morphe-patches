@@ -845,7 +845,6 @@ public final class FlyoutUtils {
             if (byteIndexInStartRange(listItemShareBytesIndexes.get(0))) {
                 setFlyoutCommentId(flyoutBuffer);
             }
-            return;
         }
 
         setFlyoutPlaylistId(flyoutBuffer);
