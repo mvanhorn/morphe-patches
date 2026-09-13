@@ -158,11 +158,11 @@ Perubahan termasuk:
   <string name="morphe_sanitize_video_subtitle_title">Bersihkan teks subtitel video</string>
   <string name="morphe_sanitize_video_subtitle_summary">Membersihkan frasa seperti \'#\', \'Penggalangan Dana\', \'Belanja\', dan \'produk\' dari teks subtitel video</string>
   <string name="morphe_hide_description_components_screen_title">Keterangan video</string>
-  <string name="morphe_hide_description_components_screen_summary">Bagian tempat Unggulan, Game, Musik, dan disebutkan Orang ditampilkan</string>
+  <string name="morphe_hide_description_components_screen_summary">Pilih komponen mana yang akan ditampilkan dalam deskripsi video</string>
   <string name="morphe_hide_ai_generated_video_summary_section_title">Sembunyikan \'Ringkasan video yang dibuat AI\'</string>
   <string name="morphe_hide_ask_section_title">Sembunyikan bagian Tanya</string>
   <string name="morphe_hide_attributes_section_title">Sembunyikan bagian Atribut</string>
-  <string name="morphe_hide_attributes_section_summary">Bagian tempat Unggulan, Game, Musik, dan disebutkan Orang ditampilkan</string>
+  <string name="morphe_hide_attributes_section_summary">Menyembunyikan bagian Tempat Unggulan, Game, Musik, dan Orang yang dimention</string>
   <string name="morphe_hide_channel_links_section_title">Sembunyikan bagian tautan saluran</string>
   <string name="morphe_hide_chapters_section_title">Sembunyikan bagian Bab</string>
   <string name="morphe_hide_corrections_section_title">Sembunyikan bagian komentar</string>
