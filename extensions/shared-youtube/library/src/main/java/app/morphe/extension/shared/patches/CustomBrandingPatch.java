@@ -207,6 +207,16 @@ public class CustomBrandingPatch {
     /**
      * Injection point.
      * <p>
+     * The icon style selected during patching.
+     */
+    private static String defaultIconStyleName() {
+        // Modified during patching, but requires a default if custom branding is excluded.
+        return "";
+    }
+
+    /**
+     * Injection point.
+     * <p>
      * If a mounted (root) install had a launcher icon applied during patching.
      */
     private static boolean mountedIconApplied() {
@@ -264,9 +274,15 @@ public class CustomBrandingPatch {
     }
 
     public static BrandingTheme getDefaultIconStyle() {
-        return userProvidedCustomIcon()
-                ? BrandingTheme.CUSTOM
-                : BrandingTheme.BLACK;
+        // Cannot log here, because this runs while Settings are initializing.
+        try {
+            return BrandingTheme.valueOf(defaultIconStyleName().toUpperCase(Locale.US));
+        } catch (IllegalArgumentException ex) {
+            // Custom branding is excluded, or an unknown style was patched in.
+            return userProvidedCustomIcon()
+                    ? BrandingTheme.CUSTOM
+                    : BrandingTheme.BLACK;
+        }
     }
 
     /**

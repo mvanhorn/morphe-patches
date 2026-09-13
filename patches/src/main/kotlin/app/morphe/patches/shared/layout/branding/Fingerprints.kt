@@ -32,6 +32,14 @@ internal object UserProvidedCustomIconExtensionFingerprint : Fingerprint(
     parameters = listOf()
 )
 
+internal object DefaultIconStyleNameExtensionFingerprint : Fingerprint(
+    definingClass = EXTENSION_CLASS,
+    name = "defaultIconStyleName",
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.STATIC),
+    returnType = "Ljava/lang/String;",
+    parameters = listOf()
+)
+
 internal object MountedIconAppliedExtensionFingerprint : Fingerprint(
     definingClass = EXTENSION_CLASS,
     name = "mountedIconApplied",
